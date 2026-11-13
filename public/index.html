@@ -1,0 +1,1392 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Tagwerk</title>
+<meta name="description" content="Habits, Wochenziele und Trainingsprotokoll">
+<meta name="theme-color" content="#EDF0F2" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0E1418" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Tagwerk">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<style>
+@font-face { font-family: 'Bricolage Grotesque'; font-style: normal; font-weight: 600; font-display: swap; src: url(fonts/bricolage-grotesque-latin-600-normal.woff2) format('woff2'); }
+@font-face { font-family: 'Bricolage Grotesque'; font-style: normal; font-weight: 700; font-display: swap; src: url(fonts/bricolage-grotesque-latin-700-normal.woff2) format('woff2'); }
+@font-face { font-family: 'Instrument Sans'; font-style: normal; font-weight: 400; font-display: swap; src: url(fonts/instrument-sans-latin-400-normal.woff2) format('woff2'); }
+@font-face { font-family: 'Instrument Sans'; font-style: normal; font-weight: 500; font-display: swap; src: url(fonts/instrument-sans-latin-500-normal.woff2) format('woff2'); }
+@font-face { font-family: 'Instrument Sans'; font-style: normal; font-weight: 600; font-display: swap; src: url(fonts/instrument-sans-latin-600-normal.woff2) format('woff2'); }
+@font-face { font-family: 'DM Mono'; font-style: normal; font-weight: 400; font-display: swap; src: url(fonts/dm-mono-latin-400-normal.woff2) format('woff2'); }
+@font-face { font-family: 'DM Mono'; font-style: normal; font-weight: 500; font-display: swap; src: url(fonts/dm-mono-latin-500-normal.woff2) format('woff2'); }
+
+/* Eigenständige Seite: Grundeinstellungen, die in der Artifact-Version die Umgebung liefert. */
+:root { color-scheme: light; padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); -webkit-text-size-adjust: 100%; }
+body { margin: 0; -webkit-tap-highlight-color: transparent; }
+img { max-width: 100%; }
+[hidden] { display: none !important; }
+button, .chip, .cell { touch-action: manipulation; }
+.field textarea { width: 100%; min-height: 84px; padding: 10px 12px; border-radius: 10px; border: 1.5px solid var(--line-strong); background: var(--bg); color: var(--ink); font-family: var(--f-mono); font-size: 16px; resize: vertical; }
+.status .warnt { color: var(--warn); }
+.login { position: fixed; inset: 0; z-index: 50; display: flex; align-items: center; justify-content: center; padding: 20px; background: var(--bg); overflow-y: auto; }
+.login-card { width: 100%; max-width: 380px; display: flex; flex-direction: column; gap: 14px; }
+.login-card .brand { margin: 0; }
+.login-h { margin: 0; font-family: var(--f-display); font-size: 26px; }
+.login .field input[type="password"] { width: 100%; min-height: 48px; padding: 10px 12px; border-radius: 10px; border: 1.5px solid var(--line-strong); background: var(--surface); color: var(--ink); font-size: 16px; }
+.sync-line { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; font-family: var(--f-mono); font-size: 13px; color: var(--muted); }
+.sync-line .warnt { color: var(--warn); }
+/* Layout: eine schmale Spalte, Ansichten Heute / Woche / Habits, dazu ein Trainings-Protokoll. */
+:root {
+  --bg: #EDF0F2;
+  --surface: #FFFFFF;
+  --ink: #13202A;
+  --muted: #566774;
+  --line: #DCE2E7;
+  --line-strong: #AAB7C0;
+  --accent: #0B7A64;
+  --accent-ink: #FFFFFF;
+  --accent-soft: #D6ECE4;
+  --warn: #A24E08;
+  --warn-soft: #F7E6D4;
+  --bad: #B3261E;
+  --bad-soft: #F8DAD7;
+  --good: #35896A; --good2: #6FB895; --good-t: #1F6B4D; --good-s: #DCEEE4;
+  --train: #3A78AC; --train2: #72A6D0; --train-t: #1F5C8C; --train-s: #DAE8F4;
+  --neg: #C05A56; --neg2: #E08F88; --neg-t: #9A3733; --neg-s: #F7DEDA;
+  --on-c: #FFFFFF;
+  --wash-o: .16;
+  --c: var(--good); --c2: var(--good2); --ct: var(--good-t); --cs: var(--good-s);
+  --f-display: 'Bricolage Grotesque', 'Avenir Next', 'Segoe UI', sans-serif;
+  --f-body: 'Instrument Sans', 'Segoe UI', system-ui, sans-serif;
+  --f-mono: 'DM Mono', ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0E1418; --surface: #162027; --ink: #E6EDF1; --muted: #93A4B0;
+    --line: #25333C; --line-strong: #3E505B; --accent: #3FCBA5; --accent-ink: #06241C;
+    --accent-soft: #15382F; --warn: #F0A25B; --warn-soft: #3A2A18;
+    --bad: #FF8A80; --bad-soft: #40201E;
+    --good: #4DB087; --good2: #2F7D5E; --good-t: #8FD9B8; --good-s: #1B3328;
+    --train: #5A9ED1; --train2: #3A78AC; --train-t: #9DCBEE; --train-s: #1A2D3F;
+    --neg: #DC7D77; --neg2: #B25652; --neg-t: #F2A9A3; --neg-s: #3C2121;
+    --on-c: #0E1418; --wash-o: .22;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0E1418; --surface: #162027; --ink: #E6EDF1; --muted: #93A4B0;
+  --line: #25333C; --line-strong: #3E505B; --accent: #3FCBA5; --accent-ink: #06241C;
+  --accent-soft: #15382F; --warn: #F0A25B; --warn-soft: #3A2A18;
+  --bad: #FF8A80; --bad-soft: #40201E;
+  --good: #4DB087; --good2: #2F7D5E; --good-t: #8FD9B8; --good-s: #1B3328;
+  --train: #5A9ED1; --train2: #3A78AC; --train-t: #9DCBEE; --train-s: #1A2D3F;
+  --neg: #DC7D77; --neg2: #B25652; --neg-t: #F2A9A3; --neg-s: #3C2121;
+  --on-c: #0E1418; --wash-o: .22;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--f-body);
+  font-size: 16px;
+  line-height: 1.45;
+  padding-block: 20px 48px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.app { max-width: 520px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
+button, input { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.top { display: flex; flex-direction: column; gap: 14px; }
+.brand { margin: 0; font-family: var(--f-mono); font-size: 12px; letter-spacing: .16em; text-transform: uppercase; color: var(--muted); }
+.tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; padding: 4px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; }
+.tabs button { min-height: 44px; border: 0; border-radius: 10px; background: transparent; color: var(--muted); font-weight: 500; }
+.tabs button[aria-current="page"] { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+
+.head { display: flex; flex-direction: column; gap: 6px; }
+.eyebrow { margin: 0; font-family: var(--f-mono); font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+h1 { margin: 0; font-family: var(--f-display); font-weight: 700; font-size: 30px; line-height: 1.12; letter-spacing: -.01em; text-wrap: balance; overflow-wrap: anywhere; }
+h2 { margin: 0 0 4px; font-family: var(--f-display); font-weight: 600; font-size: 22px; }
+.sub { margin: 0; color: var(--muted); }
+main { display: flex; flex-direction: column; gap: 20px; }
+.sec { display: flex; flex-direction: column; gap: 10px; }
+.sec h2 { margin: 0; }
+
+.progress { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; }
+.count { margin: 0; color: var(--muted); }
+.count .num { font-family: var(--f-mono); font-size: 22px; font-weight: 500; color: var(--ink); }
+.segs { display: flex; gap: 4px; }
+.segs i { flex: 1; height: 6px; border-radius: 3px; background: var(--line); }
+.segs i.on { background: var(--c); }
+.segs.limit i.on { background: var(--warn); }
+.segs.over i.on, .segs i.x.on { background: var(--bad); }
+.segs i.lock { background: transparent; border: 1.5px dashed var(--line-strong); }
+
+.wbar { display: flex; flex-direction: column; gap: 6px; margin-top: 6px; }
+.wbar .segs { max-width: 220px; }
+.wtxt { font-size: 13px; color: var(--muted); }
+.wtxt.met { color: var(--ct); font-weight: 500; }
+.wtxt.limit { color: var(--warn); font-weight: 500; }
+.wtxt.over { color: var(--bad); font-weight: 500; }
+
+.list { list-style: none; margin: 0; padding: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; overflow: hidden; }
+/* Typfarben (Aquarell): Training blau, gute Habits grün, schlechte Habits rosé-rot. */
+.t-good { --c: var(--good); --c2: var(--good2); --ct: var(--good-t); --cs: var(--good-s); }
+.t-train { --c: var(--train); --c2: var(--train2); --ct: var(--train-t); --cs: var(--train-s); }
+.t-bad { --c: var(--neg); --c2: var(--neg2); --ct: var(--neg-t); --cs: var(--neg-s); }
+.row, .panel, .ex, .xh, .wk-habit { position: relative; isolation: isolate; }
+.row::before, .panel::before, .ex::before, .xh::before, .wk-habit::before {
+  content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none; border-radius: inherit; opacity: var(--wash-o);
+  background: radial-gradient(90% 170% at 0% 0%, var(--c) 0%, transparent 62%), radial-gradient(70% 150% at 100% 100%, var(--c2) 0%, transparent 60%);
+}
+.tt { display: flex; flex-direction: column; gap: 20px; }
+.row { display: flex; align-items: center; gap: 14px; padding: 12px 14px; min-width: 0; }
+.row + .row { border-top: 1px solid var(--line); }
+.row-main { flex: 1; min-width: 0; }
+.row-name { font-weight: 600; overflow-wrap: anywhere; }
+.row-meta { font-size: 14px; color: var(--muted); display: flex; flex-wrap: wrap; gap: 4px 10px; }
+.row-meta .time { font-family: var(--f-mono); }
+.row-meta .late { color: var(--warn); font-weight: 500; }
+.row.is-done .row-name { color: var(--muted); text-decoration: line-through; text-decoration-color: var(--line-strong); }
+.streak { display: flex; flex-direction: column; align-items: flex-end; line-height: 1.1; flex: none; }
+.streak b { font-family: var(--f-mono); font-size: 20px; font-weight: 500; color: var(--ct); }
+.streak span { font-size: 12px; color: var(--muted); }
+
+.check { flex: none; width: 44px; height: 44px; border-radius: 50%; border: 2px solid var(--c); background: transparent; display: grid; place-items: center; color: var(--on-c); transition: background .15s, border-color .15s; }
+.check svg { opacity: 0; transition: opacity .15s; }
+.check:hover svg { opacity: .18; color: var(--ink); }
+.check[aria-pressed="true"] { background: linear-gradient(135deg, var(--c2), var(--c) 75%); border-color: var(--c); }
+.check[aria-pressed="true"] svg { opacity: 1; color: var(--on-c); }
+
+.note { margin: 0; font-size: 14px; color: var(--muted); }
+.btn { min-height: 46px; padding: 10px 18px; border-radius: 12px; border: 1.5px solid var(--c); background: var(--c); color: var(--on-c); font-weight: 600; }
+.btn.ghost { background: transparent; color: var(--ink); border-color: var(--line-strong); }
+.btn.danger { background: transparent; color: var(--warn); border-color: var(--line-strong); }
+.btn.danger.armed { background: var(--warn); color: var(--surface); border-color: var(--warn); }
+.btn.small { min-height: 40px; padding: 6px 14px; font-weight: 500; }
+.link { min-height: 40px; padding: 4px 10px; border: 0; background: transparent; color: var(--ct); font-weight: 600; }
+
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 18px 16px; display: flex; flex-direction: column; gap: 18px; }
+.field { display: flex; flex-direction: column; gap: 8px; border: 0; padding: 0; margin: 0; min-width: 0; }
+.field label, .field legend, .lab { padding: 0; font-weight: 600; font-size: 14px; margin: 0; }
+.field input[type="text"], .field input[type="time"], .field input:not([type]) { width: 100%; min-height: 48px; padding: 10px 12px; border-radius: 10px; border: 1.5px solid var(--line-strong); background: var(--bg); color: var(--ink); }
+.field input[type="time"] { max-width: 180px; font-family: var(--f-mono); }
+.hint { margin: 0; font-size: 13px; color: var(--muted); }
+.chips { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+.chip { min-height: 46px; padding: 0; border-radius: 10px; border: 1.5px solid var(--line-strong); background: transparent; font-weight: 600; }
+.chip[aria-pressed="true"] { background: var(--c); border-color: var(--c); color: var(--on-c); }
+.presets { display: flex; gap: 4px; margin-left: -10px; }
+.err { margin: 0; padding: 10px 12px; border-radius: 10px; background: var(--warn-soft); color: var(--warn); font-size: 14px; font-weight: 500; }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.seg { display: grid; grid-template-columns: repeat(var(--n, 2), 1fr); gap: 4px; padding: 4px; background: var(--bg); border: 1px solid var(--line); border-radius: 12px; }
+.seg button { min-height: 44px; border: 0; border-radius: 9px; background: transparent; color: var(--muted); font-weight: 500; padding: 0 6px; }
+.seg button[aria-pressed="true"] { background: var(--cs); color: var(--ct); font-weight: 600; }
+.stepper { display: flex; align-items: center; gap: 14px; }
+.stepbtn { width: 48px; height: 48px; flex: none; border-radius: 12px; border: 1.5px solid var(--c); background: transparent; color: var(--ct); font-size: 24px; line-height: 1; }
+.stepval { font-size: 16px; }
+.stepval b { font-family: var(--f-mono); font-size: 28px; font-weight: 500; }
+.stepbtn:disabled { opacity: .35; cursor: default; }
+.counter { display: flex; align-items: center; gap: 12px; }
+.counter .stepval b { font-size: 24px; }
+.counter .sel-d { font-family: var(--f-mono); font-size: 13px; color: var(--muted); min-width: 3.5em; }
+.countrow { flex-wrap: wrap; }
+.countrow .counter { flex: 1 1 100%; }
+.cell .cn { font-family: var(--f-mono); font-size: 16px; font-weight: 500; }
+.cell.sel { outline: 2px solid var(--ink); outline-offset: 1px; }
+
+.sect { display: flex; flex-direction: column; gap: 10px; }
+.exs { display: flex; flex-direction: column; gap: 12px; }
+.ex { border: 1px solid var(--line); border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 10px; background: var(--surface); }
+.panel .ex { background: var(--bg); }
+.ex-head { display: flex; gap: 8px; align-items: center; }
+.ex-head input { flex: 1; min-width: 0; width: 100%; min-height: 46px; padding: 8px 12px; border-radius: 10px; border: 1.5px solid var(--line-strong); background: var(--surface); color: var(--ink); }
+.ex-name { font-weight: 600; font-size: 18px; overflow-wrap: anywhere; }
+.xbtn { flex: none; width: 44px; height: 44px; border-radius: 10px; border: 1.5px solid var(--line-strong); background: transparent; color: var(--muted); display: grid; place-items: center; }
+.ex-nums { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.nf { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.nf label { font-size: 12px; color: var(--muted); font-family: var(--f-mono); letter-spacing: .06em; text-transform: uppercase; }
+.nf input { width: 100%; min-width: 0; min-height: 48px; padding: 8px 6px; border-radius: 10px; border: 1.5px solid var(--line-strong); background: var(--bg); color: var(--ink); text-align: center; font-family: var(--f-mono); font-size: 18px; }
+.panel .nf input { background: var(--surface); }
+
+.hsum { display: flex; flex-wrap: wrap; gap: 8px; }
+.pill { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 999px; border: 1.5px solid var(--line-strong); font-size: 14px; font-weight: 500; color: var(--muted); white-space: nowrap; }
+.pill.up { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
+.pill.down { color: var(--warn); border-color: var(--warn); background: var(--warn-soft); }
+.xh { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 14px; display: flex; flex-direction: column; gap: 12px; }
+.xh-top { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 8px 12px; }
+.xh-val { font-family: var(--f-mono); font-size: 28px; font-weight: 500; line-height: 1.15; }
+.xh-val small { font-size: 13px; color: var(--muted); margin-left: 6px; }
+.deltas { display: flex; flex-direction: column; gap: 2px; font-size: 14px; color: var(--muted); }
+.deltas b { font-family: var(--f-mono); font-weight: 500; color: var(--ink); }
+.deltas b.d-up { color: var(--accent); }
+.deltas b.d-down { color: var(--warn); }
+.sp { width: 100%; height: auto; display: block; }
+.sp-area { fill: var(--cs); stroke: none; }
+.sp-line { fill: none; stroke: var(--c); stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+.sp-dot { fill: var(--c); }
+.sp-axis { display: flex; justify-content: space-between; gap: 8px; font-family: var(--f-mono); font-size: 12px; color: var(--muted); }
+.xlist { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.xlist li { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 2px 10px; padding: 8px 0; border-top: 1px solid var(--line); font-size: 14px; }
+.xlist .v { font-family: var(--f-mono); color: var(--muted); }
+.week-nav { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.week-nav button { width: 44px; height: 44px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); font-size: 22px; line-height: 1; }
+.week-nav button:disabled { opacity: .35; cursor: default; }
+.week-nav span { font-family: var(--f-mono); font-size: 14px; color: var(--muted); text-align: center; }
+.quota { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.quota .num { font-family: var(--f-mono); font-size: 34px; font-weight: 500; }
+.wk { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 4px 14px 6px; }
+.wk-days, .wk-cells { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+.wk-days { padding: 12px 0 8px; border-bottom: 1px solid var(--line); text-align: center; }
+.wk-days span { display: flex; flex-direction: column; font-size: 12px; color: var(--muted); line-height: 1.25; }
+.wk-days b { font-weight: 600; }
+.wk-days small { font-family: var(--f-mono); font-size: 12px; }
+.wk-days .today { color: var(--accent); font-weight: 600; }
+.wk-habit { margin: 0 -8px; padding: 12px 8px; border-radius: 12px; display: flex; flex-direction: column; gap: 8px; }
+.wk-habit + .wk-habit { margin-top: 4px; }
+.wk-title { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.wk-title strong { font-weight: 600; overflow-wrap: anywhere; min-width: 0; }
+.wk-title span { font-family: var(--f-mono); font-size: 13px; color: var(--muted); flex: none; }
+.st-ok { color: var(--ct); }
+.t-bad .st-ok { color: var(--muted); }
+.st-open { color: var(--muted); }
+.st-limit { color: var(--warn); }
+.st-over { color: var(--bad); }
+.cell { height: 42px; width: 100%; padding: 0; border-radius: 10px; border: 1.5px solid var(--line-strong); background: transparent; display: grid; place-items: center; color: var(--on-c); }
+.cell i { width: 5px; height: 5px; border-radius: 50%; background: var(--line-strong); }
+.cell.off, .cell.pre { border-color: transparent; cursor: default; }
+.cell.future { border-color: var(--line); border-style: dashed; cursor: default; }
+.cell.today { border-color: var(--c); }
+.cell.missed { border-color: var(--warn); color: var(--warn); background: var(--warn-soft); }
+.cell.done { background: linear-gradient(135deg, var(--c2), var(--c) 70%); border-color: var(--c); }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 13px; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend em { width: 14px; height: 14px; border-radius: 4px; border: 1.5px solid var(--line-strong); display: inline-block; }
+.legend .l-train { background: var(--train); border-color: var(--train); }
+.legend .l-good { background: var(--good); border-color: var(--good); }
+.legend .l-neg { background: var(--neg); border-color: var(--neg); }
+.legend .l-miss { background: var(--warn-soft); border-color: var(--warn); }
+
+.empty { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 20px 16px; display: flex; flex-direction: column; gap: 14px; }
+.empty p { margin: 0; color: var(--muted); }
+.sugg { display: flex; flex-wrap: wrap; gap: 8px; }
+.sugg button { min-height: 44px; padding: 8px 14px; border-radius: 22px; border: 1.5px solid var(--c); background: transparent; font-weight: 500; }
+
+.status { font-family: var(--f-mono); font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 8px; flex-wrap: wrap; min-height: 20px; }
+.status button { border: 0; background: transparent; color: var(--warn); font-family: inherit; font-size: inherit; text-decoration: underline; padding: 6px 0; }
+
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="top">
+    <p class="brand">Tagwerk</p>
+    <nav class="tabs" aria-label="Ansicht">
+      <button type="button" data-act="tab" data-view="today">Heute</button>
+      <button type="button" data-act="tab" data-view="week">Woche</button>
+      <button type="button" data-act="tab" data-view="habits">Habits</button>
+    </nav>
+  </div>
+  <main id="main"></main>
+  <footer class="status" id="status" aria-live="polite"></footer>
+</div>
+<div class="login" id="login" hidden>
+  <form class="login-card" id="login-form" autocomplete="on">
+    <p class="brand">Tagwerk</p>
+    <h1 class="login-h">Anmelden</h1>
+    <p class="note">Mit deinem Passwort sind deine Daten auf jedem Gerät gleich.</p>
+    <div class="field">
+      <label for="login-pw">Passwort</label>
+      <input id="login-pw" name="password" type="password" autocomplete="current-password" required>
+    </div>
+    <p class="err" id="login-err" role="alert" hidden></p>
+    <div class="actions">
+      <button type="submit" class="btn" id="login-go">Anmelden</button>
+      <button type="button" class="btn ghost" data-act="login-skip">Später</button>
+    </div>
+  </form>
+</div>
+
+<script>
+(function () {
+  var DAYS = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
+  var DAYS_LONG = ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag', 'Sonntag'];
+  var MONTHS = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'];
+  var MON_S = ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'];
+  var SUGGEST = [
+    { name: 'Wasser trinken', mode: 'days', target: 2, label: 'Wasser trinken' },
+    { name: 'Meditieren', mode: 'min', target: 2, label: 'Meditieren (mind. 2× pro Woche)' },
+    { name: 'Alkohol trinken', mode: 'max', target: 7, label: 'Alkohol (max. 7 Einheiten pro Woche)' },
+    { name: 'Dehnen', mode: 'days', target: 2, label: 'Dehnen' }
+  ];
+  var LS = 'tagwerk.v1';
+  var KEEP_DAYS = 500;
+  var CHECK = '<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  var CROSS = '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M7 7l10 10M17 7L7 17" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>';
+
+  var $ = function (s) { return document.querySelector(s); };
+  var esc = function (s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
+  var pad = function (n) { return String(n).padStart(2, '0'); };
+  var key = function (d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); };
+  var dayIdx = function (d) { return (d.getDay() + 6) % 7; };
+  var startOfDay = function (d) { return new Date(d.getFullYear(), d.getMonth(), d.getDate()); };
+  var addDays = function (d, n) { return new Date(d.getFullYear(), d.getMonth(), d.getDate() + n); };
+  var mondayOf = function (d) { return addDays(startOfDay(d), -dayIdx(d)); };
+  var byNum = function (a, b) { return a - b; };
+  var clamp = function (n, a, b) { return Math.max(a, Math.min(b, n)); };
+  var uid = function () { return 'x' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); };
+  function parseKey(k) { var p = k.split('-'); return new Date(+p[0], +p[1] - 1, +p[2]); }
+
+  function isoWeek(d) {
+    var t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+    t.setUTCDate(t.getUTCDate() - ((t.getUTCDay() + 6) % 7) + 3);
+    var f = new Date(Date.UTC(t.getUTCFullYear(), 0, 4));
+    return 1 + Math.round(((t - f) / 86400000 - 3 + ((f.getUTCDay() + 6) % 7)) / 7);
+  }
+
+  /* ---------- state ---------- */
+  var habits = [];
+  var view = 'today';
+  var weekOffset = 0;
+  var editing = null;   // null | 'new' | habit id
+  var draft = null;
+  var confirmDel = false;
+  var session = null;   // { id, key, items }
+  var sessionReturn = 'today';
+  var wkSel = null;     // { id, key }: gewählter Tag eines "Höchstens"-Habits in der Wochenansicht
+
+  function numStr(v) {
+    if (v === null || v === undefined) return '';
+    var s = String(v).replace(',', '.').trim();
+    if (s === '.' || !/^\d*\.?\d*$/.test(s)) return '';
+    return s;
+  }
+  function normEx(e) {
+    return { id: String(e.id || uid()), name: String(e.name || ''), sets: numStr(e.sets), reps: numStr(e.reps), weight: numStr(e.weight) };
+  }
+  /* "Höchstens"-Habits zählen Einheiten pro Tag (counts); done spiegelt die Tage mit mindestens einer Einheit. */
+  function syncCounts(o, raw) {
+    var src = (raw && typeof raw === 'object' && !Array.isArray(raw)) ? raw : (o.counts || {});
+    var doneSet = {};
+    o.done.forEach(function (k) { doneSet[k] = 1; });
+    if (o.mode === 'max') {
+      Object.keys(src).forEach(function (k) {
+        if (parseInt(src[k], 10) > 0 && !doneSet[k]) { doneSet[k] = 1; o.done.push(k); }
+      });
+    }
+    var c = {};
+    Object.keys(doneSet).sort().forEach(function (k) {
+      var v = parseInt(src[k], 10);
+      c[k] = v > 0 ? clamp(v, 1, 50) : 1;
+    });
+    o.counts = c;
+  }
+  function setUnits(h, k, n) {
+    n = clamp(n, 0, 50);
+    if (n > 0) h.counts[k] = n; else delete h.counts[k];
+    var i = h.done.indexOf(k);
+    if (n > 0 && i < 0) h.done.push(k);
+    else if (n === 0 && i > -1) h.done.splice(i, 1);
+  }
+  function normalize(h) {
+    var o = normalizeBase(h);
+    syncCounts(o, h.counts);
+    return o;
+  }
+  function normalizeBase(h) {
+    var mode = (h.mode === 'min' || h.mode === 'max') ? h.mode : 'days';
+    var t = parseInt(h.target, 10);
+    if (!(t >= 0)) t = 2;
+    t = clamp(t, mode === 'max' ? 0 : 1, mode === 'max' ? 30 : 7);
+    var log = {};
+    if (h.log && typeof h.log === 'object' && !Array.isArray(h.log)) {
+      Object.keys(h.log).forEach(function (k) { if (Array.isArray(h.log[k])) log[k] = h.log[k].map(normEx); });
+    }
+    return {
+      id: String(h.id || ('h' + Date.now().toString(36))),
+      name: String(h.name || ''),
+      kind: h.kind === 'training' ? 'training' : 'habit',
+      mode: mode,
+      target: t,
+      days: Array.isArray(h.days) ? h.days.filter(function (x) { return x >= 0 && x <= 6; }) : [0, 1, 2, 3, 4, 5, 6],
+      time: typeof h.time === 'string' ? h.time : '',
+      created: typeof h.created === 'string' ? h.created : key(new Date()),
+      done: Array.isArray(h.done) ? h.done.filter(function (k) { return typeof k === 'string'; }) : [],
+      exercises: Array.isArray(h.exercises) ? h.exercises.map(normEx) : [],
+      log: log,
+      u: Number(h.u) > 0 ? Number(h.u) : 0
+    };
+  }
+  function newHabit(o) {
+    return normalize({
+      id: 'h' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5),
+      name: o.name, kind: o.kind, mode: o.mode, target: o.target,
+      days: (o.days || [0, 1, 2, 3, 4, 5, 6]).slice().sort(byNum),
+      time: o.time || '', created: key(new Date()), done: [], exercises: o.exercises || [], log: {}
+    });
+  }
+  var dels = {}, syncRev = 0, sigs = {};
+  try {
+    var raw = localStorage.getItem(LS);
+    if (raw) {
+      var pd = JSON.parse(raw);
+      habits = (pd.habits || []).map(normalize);
+      if (pd.dels && typeof pd.dels === 'object') dels = pd.dels;
+      syncRev = parseInt(pd.rev, 10) || 0;
+    }
+  } catch (e) { habits = []; }
+
+  /* ---------- logic ---------- */
+  function streak(h) {
+    var d = startOfDay(new Date()), n = 0;
+    for (var i = 0; i < KEEP_DAYS + 20; i++) {
+      var k = key(d);
+      if (k < h.created) break;
+      if (h.days.indexOf(dayIdx(d)) > -1) {
+        if (h.done.indexOf(k) > -1) n++;
+        else if (i !== 0) break;
+      }
+      d = addDays(d, -1);
+    }
+    return n;
+  }
+  function weekCount(h, mon) {
+    var n = 0;
+    for (var i = 0; i < 7; i++) {
+      var k = key(addDays(mon, i));
+      if (h.mode === 'max') n += h.counts[k] || 0;
+      else if (h.done.indexOf(k) > -1) n++;
+    }
+    return n;
+  }
+  function unitsTxt(n) { return n === 1 ? '1 Einheit' : n + ' Einheiten'; }
+  function counterHtml(h, k, u, lead) {
+    return '<div class="counter" role="group" aria-label="' + esc(h.name) + ': Einheiten">' + (lead || '') +
+      '<button type="button" class="stepbtn" data-act="unit" data-s="-1" data-id="' + h.id + '" data-key="' + k + '" aria-label="Eine Einheit weniger"' + (u <= 0 ? ' disabled' : '') + '>−</button>' +
+      '<span class="stepval" aria-live="polite"><b>' + u + '</b> ' + (u === 1 ? 'Einheit' : 'Einheiten') + '</span>' +
+      '<button type="button" class="stepbtn" data-act="unit" data-s="1" data-id="' + h.id + '" data-key="' + k + '" aria-label="Eine Einheit mehr">+</button></div>';
+  }
+  function selBarHtml(h) {
+    var d = parseKey(wkSel.key);
+    return counterHtml(h, wkSel.key, h.counts[wkSel.key] || 0, '<span class="sel-d">' + DAYS[dayIdx(d)] + ', ' + d.getDate() + '. ' + MON_S[d.getMonth()] + '</span>');
+  }
+  /* Übertrag bei "Höchstens": Überschuss einer Woche (höchstens ein Wochenlimit) mindert die nächste Woche. */
+  function debtMap(h) {
+    var map = {};
+    if (h.mode !== 'max') return map;
+    var cur = mondayOf(new Date());
+    var start = mondayOf(parseKey(h.created));
+    var earliest = addDays(cur, -7 * 75);
+    if (start < earliest) start = earliest;
+    var debt = 0;
+    for (var m = start; m <= cur; m = addDays(m, 7)) {
+      map[key(m)] = debt;
+      var c = 0;
+      for (var i = 0; i < 7; i++) c += h.counts[key(addDays(m, i))] || 0;
+      debt = Math.min(Math.max(0, c - (h.target - debt)), h.target);
+    }
+    return map;
+  }
+  function limitOf(h, mon, map) {
+    if (h.mode !== 'max') return h.target;
+    return h.target - ((map || debtMap(h))[key(mon)] || 0);
+  }
+  function wstate(h, c, lim) {
+    if (h.mode === 'min') return c >= lim ? 'ok' : 'open';
+    if (c > lim) return 'over';
+    if (c === lim && c > 0) return 'limit';
+    return 'ok';
+  }
+  function weekStreak(h) {
+    var mon = mondayOf(new Date());
+    var firstMon = mondayOf(parseKey(h.created));
+    var map = debtMap(h);
+    var cur = weekCount(h, mon), n = 0, curLim = limitOf(h, mon, map);
+    if (h.mode === 'min') { if (cur >= curLim) n++; }
+    else if (cur > curLim) return 0;
+    for (var w = 1; w < 75; w++) {
+      var m = addDays(mon, -7 * w);
+      if (m < firstMon) break;
+      var c = weekCount(h, m), l = limitOf(h, m, map);
+      var ok = h.mode === 'min' ? c >= l : c <= l;
+      if (!ok) break;
+      n++;
+    }
+    return n;
+  }
+  function streakOf(h) { return h.mode === 'days' ? streak(h) : weekStreak(h); }
+  function unitOf(h, n) { return h.mode === 'days' ? (n === 1 ? 'Tag' : 'Tage') : (n === 1 ? 'Woche' : 'Wochen'); }
+  function daysLabel(h) {
+    var s = h.days.slice().sort(byNum).join();
+    if (s === '0,1,2,3,4,5,6') return 'Täglich';
+    if (s === '0,1,2,3,4') return 'Werktage';
+    if (s === '5,6') return 'Wochenende';
+    return h.days.slice().sort(byNum).map(function (i) { return DAYS[i]; }).join(' ');
+  }
+  function ruleLabel(h) {
+    if (h.mode === 'min') return 'Mind. ' + h.target + '× pro Woche';
+    if (h.mode === 'max') return 'Max. ' + unitsTxt(h.target) + ' pro Woche';
+    return daysLabel(h);
+  }
+  function typeOf(h) { return h.kind === 'training' ? 'train' : h.mode === 'max' ? 'bad' : 'good'; }
+  function fmtEx(e) {
+    if (!e.sets && !e.reps && !e.weight) return '';
+    var s = (e.sets || '–') + ' × ' + (e.reps || '–');
+    if (e.weight) s += ' × ' + e.weight + ' kg';
+    return s;
+  }
+  function weeklyBlock(h, c, lim) {
+    var st = wstate(h, c, lim);
+    var debt = h.mode === 'max' ? h.target - lim : 0;
+    var total = h.mode === 'max' ? Math.min(40, Math.max(h.target, c)) : h.target;
+    var filled = h.mode === 'min' ? Math.min(c, h.target) : c;
+    var segs = '';
+    for (var i = 0; i < total; i++) {
+      var sc = i < filled ? 'on' : '';
+      if (h.mode === 'max' && i >= lim) sc = i < filled ? 'on x' : (i < h.target ? 'lock' : '');
+      segs += '<i class="' + sc + '"></i>';
+    }
+    var txt, cls = st;
+    if (h.mode === 'min') {
+      if (st === 'ok') { txt = 'Wochenziel erreicht (' + c + '×)'; cls = 'met'; }
+      else txt = c + ' von ' + h.target + ' diese Woche';
+    } else {
+      if (st === 'over') txt = 'Limit um ' + unitsTxt(c - lim) + ' überschritten';
+      else if (st === 'limit') txt = 'Limit erreicht (' + c + ' von ' + lim + ' Einheiten)';
+      else txt = c + ' von max. ' + lim + ' Einheiten diese Woche';
+      if (debt > 0) txt += ' · ' + unitsTxt(debt) + ' Übertrag aus der Vorwoche';
+    }
+    return '<div class="wbar"><div class="segs ' + st + '" aria-hidden="true">' + segs + '</div><span class="wtxt ' + cls + '">' + txt + '</span></div>';
+  }
+
+  /* ---------- storage (lokal auf diesem Gerät) + Datensicherung ---------- */
+  var ready = true, BK = 'tagwerk.backup', bkMsg = '', bkText = '', pendingImport = null, saveFailed = false;
+
+  /* Lokal speichern, dazu mit dem Server abgleichen (Login nötig). */
+  var SYNC_URL = '/api/data';
+  var sync = { st: 'idle', last: 0, running: false, again: false, timer: 0, shown: false, msg: '' };
+  var CLOUD = location.protocol !== 'file:';
+
+  function mirror() {
+    try { localStorage.setItem(LS, JSON.stringify({ habits: habits, dels: dels, rev: syncRev })); return true; } catch (e) { return false; }
+  }
+  function lastBackup() {
+    try { return parseInt(localStorage.getItem(BK), 10) || 0; } catch (e) { return 0; }
+  }
+  function sig(h) { return JSON.stringify(Object.assign({}, h, { u: 0 })); }
+  function resnap() {
+    sigs = {};
+    habits.forEach(function (h) { sigs[h.id] = sig(h); });
+  }
+  resnap();
+
+  /* Geänderte Habits mit Zeitstempel versehen, gelöschte vormerken. */
+  function stamp() {
+    var now = Date.now(), seen = {};
+    habits.forEach(function (h) {
+      seen[h.id] = 1;
+      var s = sig(h);
+      if (sigs[h.id] !== s) { h.u = now; sigs[h.id] = s; }
+    });
+    Object.keys(sigs).forEach(function (id) {
+      if (!seen[id]) { dels[id] = now; delete sigs[id]; }
+    });
+  }
+
+  /* Zwei Stände zusammenführen: pro Habit gewinnt die neuere Änderung, Löschungen zählen, wenn sie neuer sind. */
+  function mergeDocs(a, b) {
+    var dl = {};
+    [a.dels, b.dels].forEach(function (d) {
+      Object.keys(d || {}).forEach(function (id) { dl[id] = Math.max(dl[id] || 0, Number(d[id]) || 0); });
+    });
+    var cutoff = Date.now() - 90 * 86400000;
+    Object.keys(dl).forEach(function (id) { if (dl[id] < cutoff) delete dl[id]; });
+    var map = {}, order = [];
+    function take(h) {
+      var cur = map[h.id];
+      if (!cur) { map[h.id] = h; order.push(h.id); }
+      else if ((h.u || 0) > (cur.u || 0)) map[h.id] = h;
+    }
+    a.habits.forEach(take);
+    b.habits.forEach(take);
+    var out = [];
+    order.forEach(function (id) { if ((dl[id] || 0) <= (map[id].u || 0)) out.push(map[id]); });
+    return { habits: out, dels: dl };
+  }
+  function localDoc() { return { habits: habits, dels: dels }; }
+  function normDoc(d) {
+    d = d || {};
+    return {
+      habits: (Array.isArray(d.habits) ? d.habits : []).map(normalize).filter(function (h) { return h.name; }),
+      dels: d.dels && typeof d.dels === 'object' ? d.dels : {}
+    };
+  }
+  function uiBusy() { return view === 'session' || editing !== null; }
+
+  function fmtTime(t) {
+    var d = new Date(t);
+    return ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2);
+  }
+  function syncText() {
+    if (!CLOUD) return { t: 'Gespeichert auf diesem Gerät', warn: false };
+    if (sync.st === 'busy') return { t: 'Synchronisiere …', warn: false };
+    if (sync.st === 'ok') return { t: 'Synchronisiert um ' + fmtTime(sync.last), warn: false };
+    if (sync.st === 'offline') return { t: 'Offline. Wird später abgeglichen.', warn: false };
+    if (sync.st === 'auth') return { t: 'Nicht angemeldet. Daten nur auf diesem Gerät.', warn: true };
+    if (sync.st === 'setup') return { t: 'Server noch nicht eingerichtet.', warn: true };
+    if (sync.st === 'error') return { t: 'Abgleich fehlgeschlagen. Neuer Versuch folgt.', warn: true };
+    return { t: 'Gespeichert auf diesem Gerät', warn: false };
+  }
+  function setStatus() {
+    var el = $('#status');
+    if (!el) return;
+    if (saveFailed) { el.innerHTML = '<span class="warnt">Speichern nicht möglich. Der Speicher des Geräts ist voll oder gesperrt. Erstelle jetzt eine Sicherung.</span>'; return; }
+    var st = syncText(), lb = lastBackup(), t;
+    if (lb) {
+      var days = Math.floor((Date.now() - lb) / 86400000);
+      t = 'Letzte Sicherung: ' + (days <= 0 ? 'heute' : days === 1 ? 'gestern' : 'vor ' + days + ' Tagen');
+    } else t = 'Noch keine Sicherung';
+    var synced = CLOUD && sync.st === 'ok';
+    var old = !synced && habits.length && (!lb || Date.now() - lb > 14 * 86400000);
+    el.innerHTML = '<span class="' + (st.warn ? 'warnt' : '') + '">' + st.t + '</span>' +
+      (sync.st === 'auth' ? '<button type="button" data-act="login-open">Anmelden</button>' : '') +
+      (synced ? '' : '<span class="' + (old ? 'warnt' : '') + '">' + t + '</span>');
+  }
+
+  function save() {
+    var cut = key(addDays(new Date(), -KEEP_DAYS));
+    habits.forEach(function (h) {
+      h.done = h.done.filter(function (k) { return k >= cut; });
+      Object.keys(h.log).forEach(function (k) { if (k < cut) delete h.log[k]; });
+      Object.keys(h.counts).forEach(function (k) { if (k < cut) delete h.counts[k]; });
+    });
+    stamp();
+    saveFailed = !mirror();
+    setStatus();
+    scheduleSync(1500);
+  }
+
+  /* ---------- Abgleich mit dem Server ---------- */
+  function scheduleSync(ms) {
+    if (!CLOUD || sync.st === 'auth') return;
+    clearTimeout(sync.timer);
+    sync.timer = setTimeout(function () { doSync(false); }, ms);
+  }
+
+  async function doSync(manual) {
+    if (!CLOUD) return;
+    if (sync.running) { sync.again = true; return; }
+    if (uiBusy() && !manual) { scheduleSync(20000); return; }
+    if (navigator.onLine === false) { sync.st = 'offline'; setStatus(); return; }
+    sync.running = true;
+    if (sync.st !== 'ok') { sync.st = 'busy'; setStatus(); }
+    try {
+      var done = false;
+      for (var tries = 0; tries < 4 && !done; tries++) {
+        var r = await fetch(SYNC_URL, { credentials: 'same-origin', cache: 'no-store' });
+        if (r.status === 401) { sync.st = 'auth'; showLogin(false); return; }
+        if (r.status === 503) { sync.st = 'setup'; return; }
+        if (!r.ok) throw new Error('http ' + r.status);
+        var srv = await r.json();
+        var remote = normDoc(srv.doc);
+        if (uiBusy() && !manual) { sync.st = 'idle'; scheduleSync(20000); return; }
+        var before = JSON.stringify(localDoc());
+        var merged = mergeDocs(localDoc(), remote);
+        var changed = JSON.stringify(merged) !== before;
+        if (changed) { habits = merged.habits; dels = merged.dels; resnap(); }
+        syncRev = srv.rev;
+        if (JSON.stringify(merged) !== JSON.stringify(remote)) {
+          var p = await fetch(SYNC_URL, {
+            method: 'PUT', credentials: 'same-origin',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ baseRev: srv.rev, doc: merged })
+          });
+          if (p.status === 409) { mirror(); continue; }
+          if (p.status === 401) { sync.st = 'auth'; showLogin(false); return; }
+          if (!p.ok) throw new Error('http ' + p.status);
+          syncRev = (await p.json()).rev;
+        }
+        saveFailed = !mirror();
+        sync.st = 'ok'; sync.last = Date.now();
+        done = true;
+        if (changed && !uiBusy()) render();
+      }
+      if (!done) sync.st = 'error';
+    } catch (e) {
+      sync.st = navigator.onLine === false ? 'offline' : 'error';
+    } finally {
+      sync.running = false;
+      setStatus();
+      if (sync.again) { sync.again = false; scheduleSync(300); }
+      else if (sync.st === 'error' || sync.st === 'offline') scheduleSync(30000);
+    }
+  }
+
+  function showLogin(force) {
+    if (!force && sync.shownOnce) return;
+    sync.shownOnce = true;
+    var box = $('#login');
+    if (!box) return;
+    box.hidden = false;
+    var pw = $('#login-pw'), err = $('#login-err');
+    if (err) err.hidden = true;
+    if (pw) { pw.value = ''; setTimeout(function () { pw.focus(); }, 50); }
+  }
+  async function doLogin() {
+    var pw = $('#login-pw'), err = $('#login-err'), go = $('#login-go');
+    function fail(m) { err.textContent = m; err.hidden = false; go.disabled = false; pw.focus(); }
+    err.hidden = true; go.disabled = true;
+    try {
+      var r = await fetch('/api/login', {
+        method: 'POST', credentials: 'same-origin',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ password: pw.value })
+      });
+      if (r.status === 401) return fail('Falsches Passwort.');
+      if (r.status === 429) return fail('Zu viele Versuche. Bitte in 10 Minuten noch einmal.');
+      if (r.status === 503) { var j = await r.json().catch(function () { return {}; }); return fail(j.message || 'Der Server ist noch nicht eingerichtet.'); }
+      if (!r.ok) return fail('Anmeldung nicht möglich. Bitte später noch einmal.');
+    } catch (e) { return fail('Keine Verbindung. Bist du online?'); }
+    go.disabled = false; pw.value = '';
+    $('#login').hidden = true;
+    sync.st = 'busy'; setStatus();
+    await doSync(true);
+    render();
+  }
+  async function logout() {
+    try { await fetch('/api/logout', { method: 'POST', credentials: 'same-origin' }); } catch (e) {}
+    sync.st = 'auth'; sync.shownOnce = true; setStatus();
+  }
+  function renderAccount() {
+    if (!CLOUD) return '';
+    var st = syncText();
+    var acts = sync.st === 'auth'
+      ? '<button type="button" class="btn" data-act="login-open">Anmelden</button>'
+      : '<button type="button" class="btn ghost" data-act="sync-now">Jetzt abgleichen</button><button type="button" class="btn ghost" data-act="logout">Abmelden</button>';
+    return '<section class="sec"><h2>Konto</h2><p class="note">Deine Daten liegen auf deinem Gerät und auf deinem Server. Nach der Anmeldung sind alle Geräte gleich.</p>' +
+      '<div class="sync-line"><span class="' + (st.warn ? 'warnt' : '') + '">' + st.t + '</span></div>' +
+      '<div class="actions">' + acts + '</div></section>';
+  }
+  function startSync() {
+    if (!CLOUD) return;
+    doSync(false);
+    document.addEventListener('visibilitychange', function () { if (!document.hidden) scheduleSync(400); });
+    window.addEventListener('online', function () { scheduleSync(400); });
+    window.addEventListener('offline', function () { sync.st = 'offline'; setStatus(); });
+    setInterval(function () { if (!document.hidden && sync.st !== 'auth') scheduleSync(0); }, 120000);
+  }
+
+  function backupJson() {
+    return JSON.stringify({ app: 'tagwerk', version: 1, exported: new Date().toISOString(), habits: habits }, null, 1);
+  }
+  function markBackup() {
+    try { localStorage.setItem(BK, String(Date.now())); } catch (e) {}
+    setStatus();
+  }
+  async function exportFile() {
+    var json = backupJson(), name = 'tagwerk-sicherung-' + key(new Date()) + '.json';
+    try {
+      var file = new File([json], name, { type: 'application/json' });
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({ files: [file], title: 'Tagwerk Sicherung' });
+        markBackup(); bkMsg = 'Sicherung gespeichert.';
+        return;
+      }
+    } catch (e) {
+      if (e && e.name === 'AbortError') return;
+    }
+    try {
+      var url = URL.createObjectURL(new Blob([json], { type: 'application/json' }));
+      var a = document.createElement('a');
+      a.href = url; a.download = name;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
+      markBackup(); bkMsg = 'Sicherung heruntergeladen.';
+    } catch (e) {
+      bkMsg = 'Die Datei konnte nicht gespeichert werden. Nutze „Als Text kopieren“.';
+    }
+  }
+  async function copyText() {
+    var json = backupJson();
+    try {
+      await navigator.clipboard.writeText(json);
+      markBackup(); bkMsg = 'Sicherung kopiert. Füge sie dort ein, wo du sie aufbewahrst, zum Beispiel in Notizen.';
+    } catch (e) {
+      bkText = json;
+      bkMsg = 'Kopieren wurde nicht erlaubt. Der Text steht unten. Markiere ihn und kopiere ihn von Hand.';
+    }
+  }
+  function parseBackup(text) {
+    var data = JSON.parse(text);
+    var list = Array.isArray(data) ? data : data && data.habits;
+    if (!Array.isArray(list)) throw new Error('format');
+    return list.map(normalize).filter(function (h) { return h.name; });
+  }
+  function stageImport(text) {
+    try {
+      var list = parseBackup(text);
+      if (!list.length) throw new Error('leer');
+      pendingImport = list; bkMsg = '';
+    } catch (e) {
+      pendingImport = null; bkMsg = 'Das ist keine gültige Tagwerk-Sicherung.';
+    }
+  }
+  function applyImport() {
+    habits = pendingImport; pendingImport = null; bkText = '';
+    bkMsg = 'Sicherung geladen: ' + habits.length + (habits.length === 1 ? ' Habit.' : ' Habits.');
+    save();
+  }
+  function renderBackup() {
+    var pend = '';
+    if (pendingImport) {
+      var entries = pendingImport.reduce(function (n, h) { return n + h.done.length; }, 0);
+      pend = '<p class="err">In der Sicherung: ' + pendingImport.length + (pendingImport.length === 1 ? ' Habit' : ' Habits') + ' mit ' + entries + ' Einträgen. Deine aktuellen Daten (' + habits.length + (habits.length === 1 ? ' Habit' : ' Habits') + ') werden dadurch ersetzt.</p>' +
+        '<div class="actions"><button type="button" class="btn" data-act="bk-apply">Jetzt ersetzen</button><button type="button" class="btn ghost" data-act="bk-cancel">Abbrechen</button></div>';
+    }
+    return '<section class="sec"><h2>Datensicherung</h2>' +
+      '<p class="note">Zusätzlich zum Server kannst du eine Sicherung als Datei oder Text ablegen, zum Beispiel in iCloud Drive.</p>' +
+      '<div class="actions"><button type="button" class="btn ghost" data-act="bk-export">Sicherung speichern</button><button type="button" class="btn ghost" data-act="bk-copy">Als Text kopieren</button><button type="button" class="btn ghost" data-act="bk-file">Sicherung laden</button></div>' +
+      '<input id="bk-file" type="file" accept=".json,application/json" hidden>' +
+      '<div class="field"><label for="bk-text">Sicherung als Text einfügen</label><textarea id="bk-text" rows="3" spellcheck="false" placeholder="Hier einfügen">' + esc(bkText) + '</textarea>' +
+      '<div class="actions"><button type="button" class="btn ghost small" data-act="bk-paste">Prüfen</button></div></div>' +
+      pend + (bkMsg ? '<p class="note" role="status">' + esc(bkMsg) + '</p>' : '') + '</section>';
+  }
+
+  /* ---------- views ---------- */
+  function renderEmpty() {
+    return '<section class="empty"><h2>Noch keine Habits</h2><p>Lege dein erstes Habit an oder starte mit einem Vorschlag. Regel, Tage und Uhrzeit kannst du danach ändern.</p>' +
+      '<div class="sugg">' + SUGGEST.map(function (s, i) { return '<button type="button" class="t-' + (s.mode === 'max' ? 'bad' : 'good') + '" data-act="suggest" data-i="' + i + '">' + esc(s.label) + '</button>'; }).join('') + '</div>' +
+      '<div><button type="button" class="btn" data-act="new">Eigenes Habit anlegen</button></div></section>';
+  }
+
+  function rowHtml(h, k, mon, hh) {
+    var done = h.done.indexOf(k) > -1;
+    var tr = h.kind === 'training', neg = h.mode === 'max', weekly = h.mode !== 'days';
+    var c = weekly ? weekCount(h, mon) : 0;
+    var lim = weekly ? limitOf(h, mon) : 0;
+    var st = weekly ? wstate(h, c, lim) : '';
+    var late = h.mode === 'days' && !done && h.time && hh > h.time;
+    var n = streakOf(h);
+    if (neg) {
+      return '<li class="row countrow t-bad"><div class="row-main"><div class="row-name">' + esc(h.name) + '</div>' + weeklyBlock(h, c, lim) + '</div>' +
+        (n > 0 ? '<div class="streak"><b>' + n + '</b><span>' + unitOf(h, n) + '</span></div>' : '') +
+        counterHtml(h, k, h.counts[k] || 0, '<span class="sel-d">Heute</span>') + '</li>';
+    }
+    var meta = '';
+    if (h.mode === 'days') {
+      if (h.time) meta += '<span class="time' + (late ? ' late' : '') + '">' + esc(h.time) + (late ? ' · fällig' : '') + '</span>';
+      meta += '<span>' + esc(daysLabel(h)) + '</span>';
+    }
+    if (tr) meta += '<span>Training · ' + h.exercises.length + (h.exercises.length === 1 ? ' Übung' : ' Übungen') + (done ? '' : ' · Antippen zum Ausfüllen') + '</span>';
+    var btn;
+    if (tr) {
+      btn = '<button type="button" class="check" data-act="session" data-id="' + h.id + '" data-key="' + k + '" aria-pressed="' + done + '" aria-label="' + esc(h.name) + ': Training öffnen">' + CHECK + '</button>';
+    } else {
+      btn = '<button type="button" class="check' + (neg ? ' neg' + (st === 'over' ? ' over' : '') : '') + '" data-act="toggle" data-id="' + h.id + '" data-key="' + k + '" aria-pressed="' + done + '" aria-label="' + esc(h.name) + (neg ? ': heute passiert' : ' erledigt') + '">' + CHECK + '</button>';
+    }
+    return '<li class="row t-' + typeOf(h) + (done && !neg ? ' is-done' : '') + '">' + btn +
+      '<div class="row-main"><div class="row-name">' + esc(h.name) + '</div>' + (meta ? '<div class="row-meta">' + meta + '</div>' : '') + (weekly ? weeklyBlock(h, c, lim) : '') + '</div>' +
+      (n > 0 ? '<div class="streak"><b>' + n + '</b><span>' + unitOf(h, n) + '</span></div>' : '') + '</li>';
+  }
+
+  function renderToday() {
+    var now = new Date(), k = key(now), di = dayIdx(now), mon = mondayOf(now);
+    var hh = pad(now.getHours()) + ':' + pad(now.getMinutes());
+    var head = '<header class="head"><p class="eyebrow">Heute</p><h1>' + DAYS_LONG[di] + ', ' + now.getDate() + '. ' + MONTHS[now.getMonth()] + '</h1>';
+    if (!habits.length) return head + '</header>' + renderEmpty();
+
+    var tasks = [], track = [], rest = [];
+    habits.forEach(function (h) {
+      var done = h.done.indexOf(k) > -1;
+      if (h.mode === 'days') (h.days.indexOf(di) > -1 ? tasks : rest).push(h);
+      else if (h.mode === 'min') (weekCount(h, mon) < h.target || done ? tasks : rest).push(h);
+      else track.push(h);
+    });
+    var doneN = tasks.filter(function (h) { return h.done.indexOf(k) > -1; }).length;
+    tasks.sort(function (a, b) {
+      var da = a.done.indexOf(k) > -1, db = b.done.indexOf(k) > -1;
+      if (da !== db) return da ? 1 : -1;
+      var ta = (a.mode === 'days' && a.time) || '99:99', tb = (b.mode === 'days' && b.time) || '99:99';
+      return ta < tb ? -1 : ta > tb ? 1 : a.name.localeCompare(b.name, 'de');
+    });
+
+    var out = head;
+    if (tasks.length) {
+      var segs = tasks.map(function (_, i) { return '<i class="' + (i < doneN ? 'on' : '') + '"></i>'; }).join('');
+      var txt = doneN === tasks.length ? 'Alles erledigt' : '<span class="num">' + doneN + '</span> von ' + tasks.length + ' erledigt';
+      out += '<div class="progress"><p class="count">' + txt + '</p><div class="segs" role="img" aria-label="' + doneN + ' von ' + tasks.length + ' erledigt">' + segs + '</div></div>';
+    }
+    out += '</header>';
+
+    if (tasks.length) out += '<ul class="list">' + tasks.map(function (h) { return rowHtml(h, k, mon, hh); }).join('') + '</ul>';
+    else if (!track.length) out += '<p class="note">Für heute ist nichts offen.</p>';
+    if (track.length) {
+      out += '<section class="sec"><h2>Im Auge behalten</h2><p class="note">Zähle jede Einheit einzeln, auch mehrere am gleichen Tag. Ein Zuviel mindert das Limit der nächsten Woche.</p><ul class="list">' +
+        track.map(function (h) { return rowHtml(h, k, mon, hh); }).join('') + '</ul></section>';
+    }
+    if (rest.length) out += '<p class="note">Heute frei oder Wochenziel erreicht: ' + rest.map(function (h) { return esc(h.name); }).join(', ') + '</p>';
+    out += '<div><button type="button" class="btn ghost" data-act="new">Habit hinzufügen</button></div>';
+    return out;
+  }
+
+  function renderWeek() {
+    var today = startOfDay(new Date()), tk = key(today);
+    var mon = addDays(mondayOf(today), weekOffset * 7);
+    var days = [0, 1, 2, 3, 4, 5, 6].map(function (i) { return addDays(mon, i); });
+    var sun = days[6];
+    var range = mon.getMonth() === sun.getMonth()
+      ? mon.getDate() + '.–' + sun.getDate() + '. ' + MON_S[sun.getMonth()]
+      : mon.getDate() + '. ' + MON_S[mon.getMonth()] + ' – ' + sun.getDate() + '. ' + MON_S[sun.getMonth()];
+    var head = '<header class="head"><p class="eyebrow">Woche</p><h1>KW ' + isoWeek(mon) + '</h1></header>';
+    if (!habits.length) return head + renderEmpty();
+
+    var total = 0, got = 0;
+    var blocks = habits.map(function (h) {
+      var tr = h.kind === 'training', weekly = h.mode !== 'days', neg = h.mode === 'max';
+      var cnt = weekly ? weekCount(h, mon) : 0;
+      var wlim = weekly ? limitOf(h, mon) : 0;
+      var cells = days.map(function (d, i) {
+        var k = key(d), sched = weekly ? true : h.days.indexOf(i) > -1, done = h.done.indexOf(k) > -1, valid = k >= h.created;
+        var cls, inner = '', dis = false, state;
+        if (!sched || (!valid && !done)) { cls = sched ? 'pre' : 'off'; inner = '<i></i>'; dis = true; state = 'nicht geplant'; }
+        else if (done) { cls = 'done' + (neg ? ' neg' : ''); inner = neg ? '<span class="cn">' + (h.counts[k] || 1) + '</span>' : CHECK; state = neg ? unitsTxt(h.counts[k] || 1) : 'erledigt'; }
+        else if (k > tk) { cls = 'future'; dis = true; state = weekly ? 'noch offen' : 'geplant'; }
+        else if (k === tk) { cls = 'today'; state = 'offen'; }
+        else if (weekly) { cls = ''; state = 'nicht eingetragen'; }
+        else { cls = 'missed'; inner = CROSS; state = 'verpasst'; }
+        if (!weekly && sched && valid && k <= tk) { total++; if (done) got++; }
+        var isSel = neg && wkSel && wkSel.id === h.id && wkSel.key === k;
+        return '<button type="button" class="cell ' + cls + (isSel ? ' sel' : '') + '" data-act="' + (tr ? 'session' : neg ? 'pick' : 'toggle') + '" data-id="' + h.id + '" data-key="' + k + '"' + (dis ? ' disabled' : '') +
+          ' aria-pressed="' + (neg ? !!isSel : done) + '" aria-label="' + esc(h.name) + ', ' + DAYS_LONG[i] + ': ' + state + '">' + inner + '</button>';
+      }).join('');
+      var n = streakOf(h);
+      var right = '';
+      if (weekly) right += '<b class="st-' + wstate(h, cnt, wlim) + '">' + cnt + '/' + wlim + '</b>';
+      if (n > 0) right += (right ? ' · ' : '') + n + ' ' + (h.mode === 'days' ? unitOf(h, n) : (n === 1 ? 'Woche' : 'Wochen'));
+      return '<div class="wk-habit t-' + typeOf(h) + '"><div class="wk-title"><strong>' + esc(h.name) + '</strong>' + (right ? '<span>' + right + '</span>' : '') + '</div><div class="wk-cells">' + cells + '</div>' + (neg && wkSel && wkSel.id === h.id ? selBarHtml(h) : '') + '</div>';
+    }).join('');
+
+    var goals = habits.filter(function (h) { return h.mode !== 'days' && h.created <= key(sun); });
+    var goalsOk = goals.filter(function (h) {
+      var c = weekCount(h, mon), l = limitOf(h, mon);
+      return h.mode === 'min' ? c >= l : c <= l;
+    }).length;
+
+    var out = head +
+      '<div class="week-nav"><button type="button" data-act="wprev" aria-label="Vorherige Woche">‹</button><span>' + range + '</span>' +
+      '<button type="button" data-act="wnext" aria-label="Nächste Woche"' + (weekOffset >= 0 ? ' disabled' : '') + '>›</button></div>';
+    if (total > 0) out += '<div class="quota"><span class="num">' + Math.round(got * 100 / total) + ' %</span><span class="sub">' + got + ' von ' + total + ' Tagesaufgaben</span></div>';
+    if (goals.length) out += '<p class="note">Wochenziele im Soll: <b>' + goalsOk + ' von ' + goals.length + '</b></p>';
+    out += '<div class="wk"><div class="wk-days">' + days.map(function (d, i) {
+        return '<span class="' + (key(d) === tk ? 'today' : '') + '"><b>' + DAYS[i] + '</b><small>' + d.getDate() + '</small></span>';
+      }).join('') + '</div>' + blocks + '</div>' +
+      '<div class="legend"><span><em class="l-train"></em>Training</span><span><em class="l-good"></em>Gutes Habit</span><span><em class="l-neg"></em>Schlechtes Habit</span><span><em></em>offen</span><span><em class="l-miss"></em>verpasst</span></div>' +
+      '<p class="note">Tippe auf ein Feld, um einen vergangenen Tag nachzutragen. Bei Trainings öffnet sich das Protokoll.</p>';
+    return out;
+  }
+
+  function exField(prefix, id, f, label, val, mode) {
+    var iid = prefix + '-' + id + '-' + f;
+    return '<div class="nf"><label for="' + iid + '">' + label + '</label><input id="' + iid + '" type="text" inputmode="' + mode + '" autocomplete="off" ' +
+      (prefix === 'sx' ? 'data-sx="' : 'data-ex="') + id + '" data-f="' + f + '" value="' + esc(val) + '"></div>';
+  }
+
+  function renderForm() {
+    var isNew = editing === 'new', d = draft, tr = d.kind === 'training';
+    var modes = tr ? [['days', 'Feste Tage'], ['min', 'Mindestens']] : [['days', 'Feste Tage'], ['min', 'Mindestens'], ['max', 'Höchstens']];
+    var freq;
+    if (d.mode === 'days') {
+      freq = '<div class="chips" role="group" aria-label="Wochentage">' +
+        DAYS.map(function (l, i) { return '<button type="button" class="chip" data-act="day" data-d="' + i + '" aria-pressed="' + (d.days.indexOf(i) > -1) + '" aria-label="' + DAYS_LONG[i] + '">' + l + '</button>'; }).join('') +
+        '</div><div class="presets"><button type="button" class="link" data-act="preset" data-p="all">Täglich</button><button type="button" class="link" data-act="preset" data-p="work">Werktage</button></div>';
+    } else {
+      freq = '<div class="stepper"><button type="button" class="stepbtn" data-act="step" data-s="-1" aria-label="Weniger">−</button>' +
+        '<span class="stepval" aria-live="polite"><b>' + d.target + '</b> ' + (d.mode === 'max' ? 'Einheiten' : '×') + ' pro Woche</span>' +
+        '<button type="button" class="stepbtn" data-act="step" data-s="1" aria-label="Mehr">+</button></div>' +
+        '<p class="hint">' + (d.mode === 'min'
+          ? 'Geschafft, wenn du es mindestens ' + d.target + '× pro Woche abhakst. Die Serie zählt Wochen mit erreichtem Ziel.'
+          : 'Im Soll, solange du höchstens ' + unitsTxt(d.target) + ' pro Woche zählst. Zähle jede Einheit einzeln, auch mehrere am gleichen Tag. Überschreitest du das Limit, wird der Überschuss (höchstens ein Wochenlimit) von der nächsten Woche abgezogen. Die Serie zählt Wochen im Soll.') + '</p>';
+    }
+    var exs = '';
+    if (tr) {
+      exs = '<div class="sect"><p class="lab">Übungen</p><div class="exs">' + d.exercises.map(function (e) {
+        return '<div class="ex"><div class="ex-head"><input id="ex-' + e.id + '-name" type="text" maxlength="60" autocomplete="off" placeholder="Übung, z. B. Kniebeugen" aria-label="Name der Übung" data-ex="' + e.id + '" data-f="name" value="' + esc(e.name) + '">' +
+          '<button type="button" class="xbtn" data-act="ex-del" data-id="' + e.id + '" aria-label="Übung entfernen">' + CROSS + '</button></div>' +
+          '<div class="ex-nums">' + exField('ex', e.id, 'sets', 'Sätze', e.sets, 'numeric') + exField('ex', e.id, 'reps', 'Wdh.', e.reps, 'numeric') + exField('ex', e.id, 'weight', 'kg', e.weight, 'decimal') + '</div></div>';
+      }).join('') + '</div><div><button type="button" class="btn ghost small" data-act="ex-add">Übung hinzufügen</button></div>' +
+        '<p class="hint">Das sind Startwerte. Beim Training füllt die App immer die Werte vom letzten Mal vor.</p></div>';
+    }
+    return '<form class="panel t-' + (tr ? 'train' : d.mode === 'max' ? 'bad' : 'good') + '" data-form novalidate><h2>' + (isNew ? 'Neues Habit' : 'Habit bearbeiten') + '</h2>' +
+      '<div class="field"><span class="lab">Art</span><div class="seg" style="--n:2"><button type="button" data-act="kind" data-k="habit" aria-pressed="' + !tr + '">Habit</button><button type="button" data-act="kind" data-k="training" aria-pressed="' + tr + '">Training</button></div></div>' +
+      '<div class="field"><label for="f-name">Name</label><input id="f-name" type="text" maxlength="60" autocomplete="off" placeholder="' + (tr ? 'z. B. Training 1' : 'z. B. Meditieren') + '" value="' + esc(d.name) + '"></div>' +
+      '<div class="field"><span class="lab">Häufigkeit</span><div class="seg" style="--n:' + modes.length + '">' +
+      modes.map(function (m) { return '<button type="button" data-act="mode" data-m="' + m[0] + '" aria-pressed="' + (d.mode === m[0]) + '">' + m[1] + '</button>'; }).join('') + '</div>' + freq + '</div>' +
+      (d.mode === 'days' ? '<div class="field"><label for="f-time">Uhrzeit (optional)</label><input id="f-time" type="time" value="' + esc(d.time) + '"><p class="hint">Ab dieser Uhrzeit zeigt Heute das Habit als fällig an.</p></div>' : '') +
+      exs +
+      '<p class="err" id="f-err" role="alert" hidden></p>' +
+      '<div class="actions"><button type="submit" class="btn">Speichern</button><button type="button" class="btn ghost" data-act="cancel">Abbrechen</button>' +
+      (isNew ? '' : '<button type="button" class="btn danger" data-act="delete">Löschen</button>') + '</div></form>';
+  }
+
+  function renderHabits() {
+    var head = '<header class="head"><p class="eyebrow">Verwalten</p><h1>Habits</h1></header>';
+    if (editing !== null) return head + renderForm();
+    if (!habits.length) return head + renderEmpty() + renderAccount() + renderBackup();
+    return head + '<ul class="list">' + habits.map(function (h) {
+      var meta = '<span>' + esc(ruleLabel(h)) + '</span>';
+      if (h.mode === 'days' && h.time) meta += '<span class="time">' + esc(h.time) + '</span>';
+      if (h.kind === 'training') meta += '<span>Training · ' + h.exercises.length + (h.exercises.length === 1 ? ' Übung' : ' Übungen') + '</span>';
+      return '<li class="row t-' + typeOf(h) + '"><div class="row-main"><div class="row-name">' + esc(h.name) + '</div><div class="row-meta">' + meta + '</div></div>' +
+        '<button type="button" class="btn ghost small" data-act="edit" data-id="' + h.id + '">Bearbeiten</button></li>';
+    }).join('') + '</ul><div><button type="button" class="btn" data-act="new">Neues Habit</button></div>' + renderAccount() + renderBackup();
+  }
+
+  /* ---------- Trainingsverlauf ---------- */
+  function fmtNum(v) { return String(Math.round(v * 10) / 10); }
+  function fmtShort(k) { var d = parseKey(k); return d.getDate() + '. ' + MON_S[d.getMonth()]; }
+  function exHistory(h, ex) {
+    var rows = [];
+    Object.keys(h.log).sort().forEach(function (k) {
+      var it = h.log[k].find(function (i) { return i.id === ex.id; });
+      if (it && (it.sets || it.reps || it.weight)) rows.push({ k: k, sets: it.sets, reps: it.reps, weight: it.weight });
+    });
+    var weighted = rows.some(function (r) { return +r.weight > 0; });
+    var out = [];
+    rows.forEach(function (r) {
+      var w = +r.weight || 0, rp = +r.reps || 0, v = null;
+      if (weighted) { if (w > 0 && rp > 0) v = rp === 1 ? w : w * (1 + rp / 30); }
+      else if (rp > 0) v = rp;
+      if (v !== null) { r.v = v; out.push(r); }
+    });
+    return { rows: out, weighted: weighted };
+  }
+  function spark(vals) {
+    var W = 300, H = 64, px = 8, py = 10;
+    var min = Math.min.apply(null, vals), max = Math.max.apply(null, vals);
+    var pts = vals.map(function (v, i) {
+      var x = vals.length === 1 ? W / 2 : px + i * (W - 2 * px) / (vals.length - 1);
+      var y = max === min ? H / 2 : py + (1 - (v - min) / (max - min)) * (H - 2 * py);
+      return [x, y];
+    });
+    var line = pts.map(function (p, i) { return (i ? 'L' : 'M') + p[0].toFixed(1) + ' ' + p[1].toFixed(1); }).join(' ');
+    var last = pts[pts.length - 1], first = pts[0];
+    var area = line + ' L' + last[0].toFixed(1) + ' ' + H + ' L' + first[0].toFixed(1) + ' ' + H + ' Z';
+    return '<svg class="sp" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Verlauf der letzten ' + vals.length + ' Einheiten"><path class="sp-area" d="' + area + '"/><path class="sp-line" d="' + line + '"/><circle class="sp-dot" cx="' + last[0].toFixed(1) + '" cy="' + last[1].toFixed(1) + '" r="4.5"/></svg>';
+  }
+  function renderHistory(h) {
+    var back = '<div class="actions"><button type="button" class="btn ghost" data-act="session-back">Zurück</button></div>';
+    var data = h.exercises.map(function (ex) { return { ex: ex, hist: exHistory(h, ex) }; })
+      .filter(function (x) { return x.hist.rows.length; });
+    if (!data.length) {
+      return '<section class="empty"><h2>Noch kein Verlauf</h2><p>Speichere dein erstes Training mit Wiederholungen und Gewicht. Danach siehst du hier pro Übung, ob du besser, gleich oder schlechter bist als zuletzt.</p></section>' + back;
+    }
+    var tally = { up: 0, flat: 0, down: 0 };
+    var cards = data.map(function (x) {
+      var rows = x.hist.rows, weighted = x.hist.weighted, n = rows.length;
+      var last = rows[n - 1], prev = rows[n - 2];
+      var unit = weighted ? 'kg' : 'Wdh.';
+      var pct1 = prev ? (last.v - prev.v) / prev.v * 100 : null;
+      var status = !prev ? 'first' : pct1 > 1 ? 'up' : pct1 < -1 ? 'down' : 'flat';
+      if (tally[status] !== undefined) tally[status]++;
+      var label = { first: 'Erste Einheit', up: '▲ Besser', flat: '= Gleich', down: '▼ Schlechter' }[status];
+      var cutoff = key(addDays(parseKey(last.k), -28)), base = null;
+      rows.forEach(function (r) { if (r.k <= cutoff) base = r; });
+      var stagn = false;
+      if (n >= 4) {
+        var before = Math.max.apply(null, rows.slice(0, n - 3).map(function (r) { return r.v; }));
+        stagn = rows.slice(n - 3).every(function (r) { return r.v <= before * 1.01; });
+      }
+      function delta(lbl, ref) {
+        if (!ref) return '';
+        var dv = last.v - ref.v, pc = dv / ref.v * 100;
+        var cls = pc > 1 ? 'd-up' : pc < -1 ? 'd-down' : '';
+        var sign = dv > 0.049 ? '+' : dv < -0.049 ? '−' : '';
+        return '<span>' + lbl + ' <b class="' + cls + '">' + sign + fmtNum(Math.abs(dv)) + ' ' + unit + ' (' + sign + Math.round(Math.abs(pc)) + ' %)</b></span>';
+      }
+      var recent = rows.slice(-8);
+      var vals = recent.map(function (r) { return r.v; });
+      var lo = Math.min.apply(null, vals), hi = Math.max.apply(null, vals);
+      var chart = n >= 2
+        ? spark(vals) + '<div class="sp-axis"><span>' + fmtShort(recent[0].k) + '</span><span>' + fmtNum(lo) + '–' + fmtNum(hi) + ' ' + unit + '</span><span>' + fmtShort(recent[recent.length - 1].k) + '</span></div>'
+        : '';
+      var list = '<ul class="xlist">' + rows.slice(-5).reverse().map(function (r) {
+        return '<li><span>' + fmtShort(r.k) + ' · ' + esc(fmtEx(r)) + '</span><span class="v">' + fmtNum(r.v) + ' ' + unit + '</span></li>';
+      }).join('') + '</ul>';
+      return '<section class="xh"><div class="xh-top"><div><div class="ex-name">' + esc(x.ex.name) + '</div>' +
+        '<div class="xh-val">' + fmtNum(last.v) + '<small>' + (weighted ? 'kg · geschätztes 1RM' : 'Wdh.') + '</small></div></div>' +
+        '<span class="pill ' + status + '">' + label + '</span></div>' +
+        (prev ? '<div class="deltas">' + delta('Zur letzten Einheit', prev) + delta('Zu vor 4 Wochen', base) + '</div>' : '') +
+        chart + (stagn ? '<p class="note st-limit">Stagniert seit 3 Einheiten.</p>' : '') + list + '</section>';
+    }).join('');
+    return '<div class="hsum"><span class="pill up">▲ ' + tally.up + ' besser</span><span class="pill">= ' + tally.flat + ' gleich</span><span class="pill down">▼ ' + tally.down + ' schlechter</span></div>' +
+      '<p class="note">Verglichen wird mit der letzten Einheit. Unterschiede bis 1 % zählen als gleich. Bei Übungen mit Gewicht ist es das geschätzte Maximalgewicht für eine Wiederholung (1RM), sonst die Wiederholungen.</p>' +
+      '<div class="exs">' + cards + '</div>' + back;
+  }
+
+  function renderSession() {
+    var h = habits.find(function (x) { return x.id === session.id; });
+    if (!h) { session = null; view = 'today'; return renderToday(); }
+    var d = parseKey(session.key);
+    var done = h.done.indexOf(session.key) > -1;
+    var out = '<header class="head"><p class="eyebrow">Training</p><h1>' + esc(h.name) + '</h1><p class="sub">' + DAYS_LONG[dayIdx(d)] + ', ' + d.getDate() + '. ' + MONTHS[d.getMonth()] + (done ? ' · erledigt' : '') + '</p></header>';
+    var stab = session.tab || 'enter';
+    out += '<div class="seg" style="--n:2"><button type="button" data-act="stab" data-t="enter" aria-pressed="' + (stab === 'enter') + '">Eingeben</button><button type="button" data-act="stab" data-t="history" aria-pressed="' + (stab === 'history') + '">Verlauf</button></div>';
+    if (stab === 'history') return out + renderHistory(h);
+    if (!session.items.length) {
+      out += '<p class="note">Dieses Training hat noch keine Übungen. Du kannst sie unter Habits ergänzen und es trotzdem als erledigt speichern.</p>';
+    } else {
+      out += '<div class="exs">' + session.items.map(function (it) {
+        return '<section class="ex"><div class="ex-name">' + esc(it.name) + '</div>' + (it.prev ? '<p class="hint">Letztes Mal: ' + esc(it.prev) + '</p>' : '') +
+          '<div class="ex-nums">' + exField('sx', it.id, 'sets', 'Sätze', it.sets, 'numeric') + exField('sx', it.id, 'reps', 'Wdh.', it.reps, 'numeric') + exField('sx', it.id, 'weight', 'kg', it.weight, 'decimal') + '</div></section>';
+      }).join('') + '</div>';
+    }
+    out += '<div class="actions"><button type="button" class="btn" data-act="session-save">Training speichern</button><button type="button" class="btn ghost" data-act="session-back">Zurück</button>' +
+      (done ? '<button type="button" class="btn danger" data-act="session-undo">Als nicht erledigt markieren</button>' : '') + '</div>';
+    return out;
+  }
+
+  function render() {
+    var a = document.activeElement, sel = null;
+    if (a && a.dataset && a.dataset.act && a.closest && a.closest('#main')) {
+      sel = '[data-act="' + a.dataset.act + '"]';
+      ['id', 'key', 'd', 's', 'm', 'k', 'p', 'i', 't'].forEach(function (n) { if (a.dataset[n] !== undefined) sel += '[data-' + n + '="' + a.dataset[n] + '"]'; });
+    }
+    var tabView = view === 'session' ? sessionReturn : view;
+    document.querySelectorAll('.tabs button').forEach(function (b) {
+      if (b.dataset.view === tabView) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current');
+    });
+    var html;
+    if (view === 'session') {
+      html = renderSession();
+      if (view === 'session') html = '<div class="tt t-train">' + html + '</div>';
+    } else {
+      html = view === 'today' ? renderToday() : view === 'week' ? renderWeek() : renderHabits();
+    }
+    $('#main').innerHTML = html;
+    if (sel) { var el = $('#main ' + sel); if (el && !el.disabled) el.focus(); }
+  }
+
+  /* ---------- actions ---------- */
+  function syncChips() {
+    document.querySelectorAll('[data-act="day"]').forEach(function (c) {
+      c.setAttribute('aria-pressed', String(draft.days.indexOf(Number(c.dataset.d)) > -1));
+    });
+  }
+  function openForm(id) {
+    confirmDel = false; session = null;
+    if (id === 'new') {
+      editing = 'new';
+      draft = { kind: 'habit', name: '', mode: 'days', target: 2, days: [0, 1, 2, 3, 4, 5, 6], time: '', exercises: [] };
+    } else {
+      var h = habits.find(function (x) { return x.id === id; });
+      if (!h) return;
+      editing = id;
+      draft = { kind: h.kind, name: h.name, mode: h.mode, target: h.target, days: h.days.slice(), time: h.time,
+        exercises: h.exercises.map(function (e) { return Object.assign({}, e); }) };
+    }
+    view = 'habits'; render();
+    var f = $('#f-name'); if (f) f.focus();
+  }
+  function openSession(id, k) {
+    var h = habits.find(function (x) { return x.id === id; });
+    if (!h) return;
+    var existing = h.log[k], items;
+    if (existing) {
+      items = existing.map(function (e) { return { id: e.id, name: e.name, sets: e.sets, reps: e.reps, weight: e.weight, prev: '' }; });
+    } else {
+      items = h.exercises.map(function (e) { return { id: e.id, name: e.name, sets: e.sets, reps: e.reps, weight: e.weight, prev: fmtEx(e) }; });
+    }
+    session = { id: id, key: k, items: items, tab: 'enter' };
+    if (view !== 'session') sessionReturn = view;
+    view = 'session'; editing = null; render();
+    try { window.scrollTo(0, 0); } catch (e) {}
+  }
+  function closeSession() { session = null; view = sessionReturn; render(); }
+  function saveSession() {
+    var h = habits.find(function (x) { return x.id === session.id; });
+    if (!h) { closeSession(); return; }
+    var k = session.key;
+    var items = session.items.map(function (it) { return { id: it.id, name: it.name, sets: numStr(it.sets), reps: numStr(it.reps), weight: numStr(it.weight) }; });
+    h.log[k] = items;
+    if (h.done.indexOf(k) < 0) h.done.push(k);
+    var latest = Object.keys(h.log).sort().pop();
+    if (latest === k) {
+      h.exercises.forEach(function (ex) {
+        var it = items.find(function (i) { return i.id === ex.id; });
+        if (it) { ex.sets = it.sets; ex.reps = it.reps; ex.weight = it.weight; }
+      });
+    }
+    save(); closeSession();
+  }
+
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest('[data-act]');
+    if (!b || b.disabled) return;
+    var act = b.dataset.act;
+    if (act === 'tab') { view = b.dataset.view; editing = null; draft = null; session = null; wkSel = null; confirmDel = false; render(); }
+    else if (act === 'toggle') {
+      var h = habits.find(function (x) { return x.id === b.dataset.id; });
+      if (!h) return;
+      var i = h.done.indexOf(b.dataset.key);
+      if (i > -1) h.done.splice(i, 1); else h.done.push(b.dataset.key);
+      save(); render();
+    }
+    else if (act === 'session') openSession(b.dataset.id, b.dataset.key);
+    else if (act === 'session-save') saveSession();
+    else if (act === 'session-back') closeSession();
+    else if (act === 'session-undo') {
+      var th = habits.find(function (x) { return x.id === session.id; });
+      if (th) { var ti = th.done.indexOf(session.key); if (ti > -1) th.done.splice(ti, 1); save(); }
+      closeSession();
+    }
+    else if (act === 'stab') {
+      session.tab = b.dataset.t; render();
+      try { window.scrollTo(0, 0); } catch (e) {}
+    }
+    else if (act === 'wprev') { weekOffset--; wkSel = null; render(); }
+    else if (act === 'wnext') { if (weekOffset < 0) { weekOffset++; wkSel = null; render(); } }
+    else if (act === 'unit') {
+      var uh = habits.find(function (x) { return x.id === b.dataset.id; });
+      if (!uh) return;
+      setUnits(uh, b.dataset.key, (uh.counts[b.dataset.key] || 0) + Number(b.dataset.s));
+      save(); render();
+    }
+    else if (act === 'pick') {
+      wkSel = (wkSel && wkSel.id === b.dataset.id && wkSel.key === b.dataset.key) ? null : { id: b.dataset.id, key: b.dataset.key };
+      render();
+    }
+    else if (act === 'new') openForm('new');
+    else if (act === 'edit') openForm(b.dataset.id);
+    else if (act === 'cancel') { editing = null; draft = null; confirmDel = false; render(); }
+    else if (act === 'day') {
+      var d = Number(b.dataset.d), p = draft.days.indexOf(d);
+      if (p > -1) draft.days.splice(p, 1); else draft.days.push(d);
+      syncChips();
+    }
+    else if (act === 'preset') { draft.days = b.dataset.p === 'all' ? [0, 1, 2, 3, 4, 5, 6] : [0, 1, 2, 3, 4]; syncChips(); }
+    else if (act === 'kind') {
+      draft.kind = b.dataset.k;
+      if (draft.kind === 'training') {
+        if (draft.mode === 'max') { draft.mode = 'min'; draft.target = clamp(draft.target, 1, 7); }
+        if (!draft.exercises.length) draft.exercises.push({ id: uid(), name: '', sets: '', reps: '', weight: '' });
+      }
+      render();
+    }
+    else if (act === 'mode') {
+      draft.mode = b.dataset.m;
+      draft.target = clamp(draft.target, draft.mode === 'max' ? 0 : 1, draft.mode === 'max' ? 30 : 7);
+      if (draft.mode !== 'days') draft.time = '';
+      render();
+    }
+    else if (act === 'step') {
+      draft.target = clamp(draft.target + Number(b.dataset.s), draft.mode === 'max' ? 0 : 1, draft.mode === 'max' ? 30 : 7);
+      render();
+    }
+    else if (act === 'ex-add') {
+      draft.exercises.push({ id: uid(), name: '', sets: '', reps: '', weight: '' });
+      render();
+      var els = document.querySelectorAll('[data-ex][data-f="name"]');
+      if (els.length) els[els.length - 1].focus();
+    }
+    else if (act === 'ex-del') {
+      draft.exercises = draft.exercises.filter(function (x) { return x.id !== b.dataset.id; });
+      render();
+    }
+    else if (act === 'delete') {
+      if (!confirmDel) { confirmDel = true; b.textContent = 'Wirklich löschen'; b.classList.add('armed'); return; }
+      habits = habits.filter(function (x) { return x.id !== editing; });
+      editing = null; draft = null; confirmDel = false; save(); render();
+    }
+    else if (act === 'suggest') {
+      var s = SUGGEST[Number(b.dataset.i)];
+      if (s) { habits.push(newHabit({ name: s.name, mode: s.mode, target: s.target })); save(); render(); }
+    }
+    else if (act === 'login-open') { showLogin(true); }
+    else if (act === 'login-skip') { $('#login').hidden = true; }
+    else if (act === 'logout') { logout().then(render); }
+    else if (act === 'sync-now') { doSync(true).then(render); }
+    else if (act === 'bk-export') { exportFile().then(render); }
+    else if (act === 'bk-copy') { copyText().then(render); }
+    else if (act === 'bk-file') { var fi = document.getElementById('bk-file'); if (fi) fi.click(); }
+    else if (act === 'bk-paste') { var ta = document.getElementById('bk-text'); bkText = ta ? ta.value : ''; stageImport(bkText); render(); }
+    else if (act === 'bk-apply') { if (pendingImport) applyImport(); render(); }
+    else if (act === 'bk-cancel') { pendingImport = null; bkMsg = ''; render(); }
+  });
+
+  document.addEventListener('input', function (e) {
+    var t = e.target;
+    if (t.id === 'bk-text') bkText = t.value;
+    if (draft) {
+      if (t.id === 'f-name') draft.name = t.value;
+      if (t.id === 'f-time') draft.time = t.value;
+      if (t.dataset && t.dataset.ex) {
+        var ex = draft.exercises.find(function (x) { return x.id === t.dataset.ex; });
+        if (ex) ex[t.dataset.f] = t.value;
+      }
+    }
+    if (session && t.dataset && t.dataset.sx) {
+      var it = session.items.find(function (x) { return x.id === t.dataset.sx; });
+      if (it) it[t.dataset.f] = t.value;
+    }
+  });
+
+  document.addEventListener('change', function (e) {
+    if (!e.target || e.target.id !== 'bk-file') return;
+    var f = e.target.files && e.target.files[0];
+    if (!f) return;
+    f.text().then(function (txt) { bkText = ''; stageImport(txt); render(); });
+    e.target.value = '';
+  });
+
+  document.addEventListener('submit', function (e) {
+    if (e.target.id === 'login-form') { e.preventDefault(); doLogin(); return; }
+    if (!e.target.closest('[data-form]')) return;
+    e.preventDefault();
+    var err = $('#f-err');
+    function fail(msg, focusSel) { err.textContent = msg; err.hidden = false; var f = $(focusSel); if (f) f.focus(); }
+    var name = draft.name.trim();
+    if (!name) return fail('Gib dem Habit einen Namen.', '#f-name');
+    if (draft.mode === 'days' && !draft.days.length) return fail('Wähle mindestens einen Wochentag.', '[data-act="day"]');
+    var exs = [];
+    if (draft.kind === 'training') {
+      exs = draft.exercises.filter(function (x) { return x.name.trim(); }).map(function (x) {
+        return normEx({ id: x.id, name: x.name.trim(), sets: x.sets, reps: x.reps, weight: x.weight });
+      });
+      if (!exs.length) return fail('Füge mindestens eine Übung mit Namen hinzu.', '[data-ex][data-f="name"]');
+    }
+    var o = { name: name, kind: draft.kind, mode: draft.mode, target: draft.target, days: draft.days.slice().sort(byNum), time: draft.mode === 'days' ? draft.time : '', exercises: exs };
+    if (editing === 'new') habits.push(newHabit(o));
+    else {
+      var h = habits.find(function (x) { return x.id === editing; });
+      if (h) { Object.assign(h, o); syncCounts(h); }
+    }
+    editing = null; draft = null; confirmDel = false; save(); render();
+  });
+
+  setInterval(function () {
+    var a = document.activeElement;
+    if (view === 'today' && editing === null && !(a && a.tagName === 'INPUT')) render();
+  }, 60000);
+  document.addEventListener('visibilitychange', function () {
+    if (!document.hidden && view !== 'habits' && view !== 'session') render();
+  });
+
+  render();
+  setStatus();
+  startSync();
+  try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch (e) {}
+  if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+    window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () {}); });
+  }
+})();
+</script>
+</body>
+</html>
